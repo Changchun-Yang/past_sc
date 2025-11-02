@@ -39,7 +39,7 @@ git clone https://github.com/your-username/PAST.git
 cd PAST
 
 # Create conda environment
-conda create -n past python=3.8
+conda create -n past python=3.11
 conda activate past
 
 # Install dependencies
@@ -59,24 +59,76 @@ Model	Weights Link	Description
 ## 🧑‍💻 Quick Start
 
 ```python
-# if your data is pathology, you can use the image encoder, and cell encoder for spatial omics data
 import torch
-if misc.is_main_process():
-        print("Loading pre-trained weights...")
-checkpoint_dir = f"{mnt_args}{DefaultPaths.SPATIAL}/checkpoint"
-state_dict = torch.load(os.path.join(checkpoint_dir, "past.pth"), map_location="cpu")["model"]
-state_dict = {k.replace("image_encoder.model.", ""): v for k, v in state_dict.items()  if "image_encoder.model." in k}
-model.load_state_dict(state_dict, strict=False)
+import os
+
+# Download checkpoint from Hugging Face
+# https://huggingface.co/Boyoungc/PAST/blob/main/checkpoint-context300.pth
+
+# Load the pretrained weights
+checkpoint_path = "checkpoint-context300.pth"
+state_dict = torch.load(checkpoint_path, map_location="cpu")["model"]
+
+# Extract image encoder weights (for pathology images)
+image_encoder_weights = {
+    k.replace("image_encoder.model.", ""): v 
+    for k, v in state_dict.items() 
+    if "image_encoder.model." in k
+}
+
+# Extract cell encoder weights (for spatial omics data)
+cell_encoder_weights = {
+    k.replace("cell_encoder.model.", ""): v 
+    for k, v in state_dict.items() 
+    if "cell_encoder.model." in k
+}
+
+# Load into your model
+model.image_encoder.load_state_dict(image_encoder_weights, strict=False)
+model.cell_encoder.load_state_dict(cell_encoder_weights, strict=False)
 ```
 
----
+## Extract Image Features from H&E Patches
+
+```python
+from PIL import Image
+import torchvision.transforms as transforms
+
+# Load and preprocess image
+transform = transforms.Compose([
+    transforms.Resize(224),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], 
+                       std=[0.229, 0.224, 0.225])
+])
+
+image = Image.open("cell_patch.png")
+image_tensor = transform(image).unsqueeze(0)
+
+# Extract features
+with torch.no_grad():
+    image_features = model.image_encoder(image_tensor)
+    
+print(f"Image feature shape: {image_features.shape}")
+```
+
 
 ## 🏋️‍♂️ Pretraining PAST from Scratch
 
 To pretrain PAST, use the following command (example for 8 GPUs):
 
 ```python
-torchrun --nproc_per_node=8 --master_port=48798 PAST_train.py --exp_name 'past_pretraining' --batch_size 48 --num_workers 16 --save_interval 10000 --accum_iter 5 --distributed True --output_dir ./output_dir_context300 --log_dir ./output_dir_context300
+torchrun --nproc_per_node=8 --master_port=48798 \
+    PAST_train.py \
+    --exp_name 'past_pretraining' \
+    --batch_size 48 \
+    --num_workers 16 \
+    --save_interval 10000 \
+    --accum_iter 5 \
+    --distributed True \
+    --output_dir ./output_dir_context300 \
+    --log_dir ./output_dir_context300
 
 ```
 
