@@ -137,7 +137,7 @@ PAST can also be fine-tuned to predict single-cell gene expression directly from
 - **Same-Tissue:** Train on slides from the same tissue type while holding out a target slide for evaluation.
 - **Leave-One-Out (LOO):** Train on other tissue types and evaluate on an unseen tissue type.
 
-The required resources, including per-slide gene indices (`data_idx`) and example pretrained prediction models for breast tissue under both settings, are available on [Zenodo (10.5281/zenodo.23448720)](https://doi.org/10.5281/zenodo.23448720).
+The required resources, including per-slide gene indices (`data_idx`) and example pretrained prediction models for breast tissue under both settings, are available on [Zenodo](https://doi.org/10.5281/zenodo.23448720).
 
 #### Preparing Gene Indices
 
