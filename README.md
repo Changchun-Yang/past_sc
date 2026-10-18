@@ -52,7 +52,7 @@ pip install -r requirements.txt
 
 Model	Weights Link	Description
 
-[PAST-pretrain](https://huggingface.co/Boyoungc/PAST/blob/main/checkpoint-context300.pth)
+[PAST-pretrain](https://huggingface.co/Boyoungc/PAST/tree/main)
 
 ---
 
@@ -63,29 +63,43 @@ import torch
 import os
 
 # Download checkpoint from Hugging Face
-# https://huggingface.co/Boyoungc/PAST/blob/main/checkpoint-context300.pth
+# https://huggingface.co/Boyoungc/PAST/tree/main
 
-# Load the pretrained weights
-checkpoint_path = "checkpoint-context300.pth"
-state_dict = torch.load(checkpoint_path, map_location="cpu")["model"]
+# Loading Pretrained Encoders, We provide separately saved pretrained weights for the image encoder and cell encoder, which can be loaded independently.
 
-# Extract image encoder weights (for pathology images)
-image_encoder_weights = {
-    k.replace("image_encoder.model.", ""): v 
-    for k, v in state_dict.items() 
-    if "image_encoder.model." in k
-}
+import torch
+from models import PASTModelGraph
 
-# Extract cell encoder weights (for spatial omics data)
-cell_encoder_weights = {
-    k.replace("cell_encoder.model.", ""): v 
-    for k, v in state_dict.items() 
-    if "cell_encoder.model." in k
-}
+# Initialize PAST
+model = PASTModelGraph()
 
-# Load into your model
-model.image_encoder.load_state_dict(image_encoder_weights, strict=False)
-model.cell_encoder.load_state_dict(cell_encoder_weights, strict=False)
+# Load pretrained encoder weights
+image_weights = torch.load(
+    "past_image_encoder_context300.pth",
+    map_location="cpu",
+    weights_only=True
+)
+
+cell_weights = torch.load(
+    "past_cell_encoder_context300.pth",
+    map_location="cpu",
+    weights_only=True
+)
+
+# Load Image Encoder
+model.image_encoder.model.load_state_dict(
+    image_weights, strict=True
+)
+
+# Load Cell Encoder
+model.cell_encoder.load_state_dict(
+    cell_weights, strict=True
+)
+
+model.eval()
+
+# Note on the Omics Encoder: Although we provide the pretrained cell encoder and an interface for processing omics data, PAST was not specifically pretrained to learn general-purpose omics representations. Therefore, the cell # encoder is provided primarily for completeness and flexibility, and its effectiveness as a standalone omics feature extractor has not been systematically evaluated. We recommend validating its performance before using it for # downstream omics-specific tasks.
+
 ```
 
 ## Extract Image Features from H&E Patches
