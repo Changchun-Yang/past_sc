@@ -165,7 +165,7 @@ for h5_file in sorted(data_dir.glob("*.h5")):
     )
 ```
 
-The example generates indices for all H5 files. The original preprocessing script excluded samples identified as Xenium 5K.
+The example generates indices for all H5 files.
 
 #### Training and Evaluation
 
@@ -174,7 +174,7 @@ The example generates indices for all H5 files. The original preprocessing scrip
 The following example trains on breast tissue slides while holding out one slide for evaluation.
 
 ```bash
-python resources/exp_past_same_tissue_train_original_aligned.py \
+python resources/exp_past_same_tissue_train.py \
     --target_tissue breast \
     --target_sample human_breast_FFPEHBUTESA_Replicate_1 \
     --feature_mode union \
@@ -184,7 +184,7 @@ python resources/exp_past_same_tissue_train_original_aligned.py \
 Evaluate the trained model:
 
 ```bash
-python resources/exp_past_same_tissue_eval_original_aligned.py \
+python resources/exp_past_same_tissue_eval.py \
     --model_dirs ./results/same_tissue/same_tissue_breast_human_breast_FFPEHBUTESA_Replicate_1_union \
     --output_dir ./results/same_tissue_eval
 ```
@@ -209,7 +209,7 @@ python resources/exp_past_leave_one_out_eval.py \
     --output_dir ./results/leave_one_out_eval
 ```
 
-Both settings fine-tune a ViT-Large image encoder for gene expression regression and report gene-level and cell-level Pearson correlations, MSE, and other evaluation metrics.
+Both settings fine-tune a ViT-Large image encoder for gene expression regression and report evaluation metrics.
 
 #### Using Pretrained Prediction Models
 
@@ -219,7 +219,8 @@ To perform inference without retraining, download the corresponding model checkp
 
 The evaluation scripts automatically reconstruct the prediction model using the gene indices stored in the checkpoint and generate expression predictions for the specified test slide.
 
-**Note:** Update the dataset paths and pretrained PAST checkpoint path in the scripts to match your local environment. The `data_idx` directory is expected under the working directory unless the code is adjusted accordingly. Use the provided gene mapping and expression preprocessing conventions when preparing your own datasets.
+**Note:** Update the dataset paths and pretrained PAST checkpoint path in the scripts to match your local environment. The data_idx directory is expected under the working directory unless the code is adjusted accordingly. Use the provided gene mapping and expression preprocessing conventions when preparing your own datasets. Since downstream performance depends on the tissue and cancer types used for fine-tuning, the provided breast tissue checkpoints are expected to perform best on breast tissue and are primarily intended for breast-specific applications. These examples are provided to demonstrate how the PAST foundation model can be adapted to downstream single-cell gene expression prediction and inference.
+
 
 
 ## 🏋️‍♂️ Pretraining PAST from Scratch
