@@ -130,6 +130,97 @@ with torch.no_grad():
 print(f"Image feature shape: {image_features.shape}")
 ```
 
+## Single-Cell Gene Expression Prediction
+
+PAST can also be fine-tuned to predict single-cell gene expression directly from H&E image patches. We provide training and evaluation scripts for two settings in the [`resources/`](resources/) directory:
+
+- **Same-Tissue:** Train on slides from the same tissue type while holding out a target slide for evaluation.
+- **Leave-One-Out (LOO):** Train on other tissue types and evaluate on an unseen tissue type.
+
+The required resources, including per-slide gene indices (`data_idx`) and example pretrained prediction models for breast tissue under both settings, are available on [Zenodo (10.5281/zenodo.23448720)](https://doi.org/10.5281/zenodo.23448720).
+
+#### Preparing Gene Indices
+
+The `data_idx` directory contains a `.npy` file for each Xenium slide, storing the sorted union of gene indices observed across its cells. These files can be downloaded from Zenodo or generated from the corresponding tokenized H5 files:
+
+```python
+import h5py
+import numpy as np
+from pathlib import Path
+
+data_dir = Path("path/to/tokenized/pretrain/Xenium")
+output_dir = Path("./data_idx")
+output_dir.mkdir(parents=True, exist_ok=True)
+
+for h5_file in sorted(data_dir.glob("*.h5")):
+    gene_indices = set()
+
+    with h5py.File(h5_file, "r") as f:
+        for indices in f["X_model_indices"]:
+            gene_indices.update(indices)
+
+    np.save(
+        output_dir / f"{h5_file.stem}.npy",
+        np.array(sorted(gene_indices), dtype=np.int64)
+    )
+```
+
+The example generates indices for all H5 files. The original preprocessing script excluded samples identified as Xenium 5K.
+
+#### Training and Evaluation
+
+**Same-Tissue**
+
+The following example trains on breast tissue slides while holding out one slide for evaluation.
+
+```bash
+python resources/exp_past_same_tissue_train_original_aligned.py \
+    --target_tissue breast \
+    --target_sample human_breast_FFPEHBUTESA_Replicate_1 \
+    --feature_mode union \
+    --output_dir ./results/same_tissue
+```
+
+Evaluate the trained model:
+
+```bash
+python resources/exp_past_same_tissue_eval_original_aligned.py \
+    --model_dirs ./results/same_tissue/same_tissue_breast_human_breast_FFPEHBUTESA_Replicate_1_union \
+    --output_dir ./results/same_tissue_eval
+```
+
+**Leave-One-Out**
+
+The following example excludes all breast tissue slides from training and evaluates the model on a held-out breast slide.
+
+```bash
+python resources/exp_past_leave_one_out_train.py \
+    --target_tissue breast \
+    --feature_mode union \
+    --output_dir ./results/leave_one_out
+```
+
+Evaluate the trained model:
+
+```bash
+python resources/exp_past_leave_one_out_eval.py \
+    --model_dirs ./results/leave_one_out/leave_one_out_breast_union \
+    --test_sample human_breast_FFPEHBUTESA_Replicate_1 \
+    --output_dir ./results/leave_one_out_eval
+```
+
+Both settings fine-tune a ViT-Large image encoder for gene expression regression and report gene-level and cell-level Pearson correlations, MSE, and other evaluation metrics.
+
+#### Using Pretrained Prediction Models
+
+We also provide example **breast tissue gene expression prediction checkpoints** for both Same-Tissue and Leave-One-Out settings on [Zenodo](https://doi.org/10.5281/zenodo.23448720).
+
+To perform inference without retraining, download the corresponding model checkpoint (`best_model.pt`) and its training configuration (`train_config.json`), organize them in a model directory, and run the appropriate evaluation script above with `--model_dirs` pointing to that directory.
+
+The evaluation scripts automatically reconstruct the prediction model using the gene indices stored in the checkpoint and generate expression predictions for the specified test slide.
+
+**Note:** Update the dataset paths and pretrained PAST checkpoint path in the scripts to match your local environment. The `data_idx` directory is expected under the working directory unless the code is adjusted accordingly. Use the provided gene mapping and expression preprocessing conventions when preparing your own datasets.
+
 
 ## 🏋️‍♂️ Pretraining PAST from Scratch
 
