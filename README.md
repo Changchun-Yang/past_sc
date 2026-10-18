@@ -98,7 +98,10 @@ model.cell_encoder.load_state_dict(
 
 model.eval()
 
-# Note on the Omics Encoder: Although we provide the pretrained cell encoder and an interface for processing omics data, PAST was not specifically pretrained to learn general-purpose omics representations. Therefore, the cell # encoder is provided primarily for completeness and flexibility, and its effectiveness as a standalone omics feature extractor has not been systematically evaluated. We recommend validating its performance before using it for # downstream omics-specific tasks.
+# Note on the Omics Encoder: Although we provide the pretrained cell encoder and an interface for processing omics data,
+# PAST was not specifically pretrained to learn general-purpose omics representations.
+# Therefore, the cell # encoder is provided primarily for completeness and flexibility, and its effectiveness as a standalone omics feature extractor has not been systematically evaluated.
+# We recommend validating its performance before using it for # downstream omics-specific tasks.
 
 ```
 
