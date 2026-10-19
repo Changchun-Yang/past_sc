@@ -222,22 +222,6 @@ The evaluation scripts automatically reconstruct the prediction model using the 
 **Note:** Update the dataset paths and pretrained PAST checkpoint path in the scripts to match your local environment. The data_idx directory is expected under the working directory unless the code is adjusted accordingly. Use the provided gene mapping and expression preprocessing conventions when preparing your own datasets. Since downstream performance depends on the tissue and cancer types used for fine-tuning, the provided breast tissue checkpoints are expected to perform best on breast tissue and are primarily intended for breast-specific applications. These examples are provided to demonstrate how the PAST foundation model can be adapted to downstream single-cell gene expression prediction and inference.
 
 
-
-## 🏋️‍♂️ Pretraining PAST from Scratch
-
-To pretrain PAST, use the following command (example for 8 GPUs):
-
-```python
-torchrun --nproc_per_node=8 --master_port=48798 \
-    PAST_train.py \
-    --exp_name 'past_pretraining' \
-    --distributed True
-
-```
-
-Change --nproc_per_node based on the number of GPUs you have.
-
-
 ---
 
 ## 📄 Citation
