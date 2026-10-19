@@ -231,13 +231,7 @@ To pretrain PAST, use the following command (example for 8 GPUs):
 torchrun --nproc_per_node=8 --master_port=48798 \
     PAST_train.py \
     --exp_name 'past_pretraining' \
-    --batch_size 48 \
-    --num_workers 16 \
-    --save_interval 10000 \
-    --accum_iter 5 \
-    --distributed True \
-    --output_dir ./output_dir_context300 \
-    --log_dir ./output_dir_context300
+    --distributed True
 
 ```
 
